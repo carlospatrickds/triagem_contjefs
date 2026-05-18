@@ -365,6 +365,12 @@ if(filtros.assunto.length) texto+="Assunto: "+filtros.assunto.join(", ")+"<br>";
 // ================= HTML PDF
 let html = `
 <style>
+/* === ESSA É A REGRA QUE FORÇA A IMPRESSÃO DAS CORES === */
+* {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+}
+
 body{
     font-family:Arial;
 }
@@ -388,10 +394,11 @@ body{
 table{
     width:100%;
     border-collapse:collapse;
+    margin-top: 15px;
 }
 
 th{
-    background:#64b5f6;
+    background:#64b5f6 !important; /* Adicionado !important para garantir */
     color:white;
 }
 
@@ -401,7 +408,7 @@ td,th{
 }
 
 tr:nth-child(even){
-    background:#f1f1f1;
+    background:#f1f1f1 !important; /* Adicionado !important para garantir */
 }
 
 .footer{
@@ -411,7 +418,6 @@ tr:nth-child(even){
 </style>
 
 <div class="header">
-    
     <div>
         <h3 style="margin:0;">Contadoria Judicial</h3>
         <p style="margin:0;">Justiça Federal em Pernambuco</p>
@@ -432,8 +438,10 @@ Relatório emitido em: ${dataHora}
 `;
 
 // ================= ABRIR
-let win = window.open("");
+let win = window.open("", "_blank");
 win.document.write(html);
+win.document.close(); // Importante para garantir que a página carregue completamente
+win.focus();
 win.print();
 
 }
