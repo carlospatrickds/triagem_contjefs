@@ -5,7 +5,7 @@
 <title>Contadoria Judicial - PE</title>
 
 <!-- ✅ Chart.js corrigido -->
-https://cdn.jsdelivr.net/npm/chart.jsscript>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 
@@ -106,42 +106,40 @@ button{
 <body>
 
 <header>
-
-<h3>Sistema de Filtragem Contadoria Judicial - Justiça Federal em Pernambuco</h3>
+    <h3>Sistema de Filtragem Contadoria Judicial - Justiça Federal em Pernambuco</h3>
 </header>
 
 <div class="container">
 
-<div id="drop">Arraste o CSV aqui ou clique</div>
-<input type="file" id="file" hidden>
+    <div id="drop">Arraste o CSV aqui ou clique</div>
+    <input type="file" id="file" hidden>
 
-<button onclick="gerarPDF()">📄 Gerar PDF</button>
-<button onclick="salvarJSON()">💾 Salvar JSON</button>
-<button onclick="carregarJSON()">📂 Carregar JSON</button>
+    <button onclick="gerarPDF()">📄 Gerar PDF</button>
+    <button onclick="salvarJSON()">💾 Salvar JSON</button>
+    <button onclick="carregarJSON()">📂 Carregar JSON</button>
 
-<h3>Total filtrado: <span id="total">0</span></h3>
+    <h3>Total filtrado: <span id="total">0</span></h3>
 
-<!-- COLUNAS -->
-<div class="colunas">
-<b>Colunas:</b><br>
+    <!-- COLUNAS -->
+    <div class="colunas">
+        <b>Colunas:</b><br>
+        <label><input type="checkbox" checked id="c1" onchange="render()"> Processo</label>
+        <label><input type="checkbox" id="c2" onchange="render()"> Autor</label>
+        <label><input type="checkbox" checked id="c3" onchange="render()"> Réu</label>
+        <label><input type="checkbox" checked id="c4" onchange="render()"> Órgão</label>
+        <label><input type="checkbox" checked id="c5" onchange="render()"> Data</label>
+        <label><input type="checkbox" checked id="c6" onchange="render()"> Assunto</label>
+        <label><input type="checkbox" id="c7" onchange="render()"> Etiqueta</label>
+        <label><input type="checkbox" id="c8" onchange="render()"> Dias</label>
+    </div>
 
-<label><input type="checkbox" checked id="c1" onchange="render()"> Processo</label>
-<label><input type="checkbox" id="c2" onchange="render()"> Autor</label>
-<label><input type="checkbox" checked id="c3" onchange="render()"> Réu</label>
-<label><input type="checkbox" checked id="c4" onchange="render()"> Órgão</label>
-<label><input type="checkbox" checked id="c5" onchange="render()"> Data</label>
-<label><input type="checkbox" checked id="c6" onchange="render()"> Assunto</label>
-<label><input type="checkbox" id="c7" onchange="render()"> Etiqueta</label>
-<label><input type="checkbox" id="c8" onchange="render()"> Dias</label>
-</div>
+    <!-- FILTROS -->
+    <div id="filtros" class="filtros-grid"></div>
 
-<!-- FILTROS -->
-<div id="filtros" class="filtros-grid"></div>
-
-<table>
-<thead></thead>
-<tbody></tbody>
-</table>
+    <table>
+        <thead></thead>
+        <tbody></tbody>
+    </table>
 
 </div>
 
@@ -169,280 +167,266 @@ file.onchange=e=>processar(e.target.files[0]);
 // ================= CSV
 function processar(f){
 
-let reader=new FileReader();
+    let reader=new FileReader();
 
-reader.onload=e=>{
+    reader.onload=e=>{
 
-let linhas=e.target.result.split("\n").map(l=>l.replaceAll('"',''));
+        let linhas=e.target.result.split("\n").map(l=>l.replaceAll('"',''));
 
-dados=linhas.slice(1).map(l=>{
-let c=l.split(";");
+        dados=linhas.slice(1).map(l=>{
+            let c=l.split(";");
 
-return{
-proc:c[5],
-autor:c[2],
-reu:c[3],
-orgao:c[8],
-data:c[9],
-mes:(c[9]||"").split("/")[1],
-assunto:c[22],
-etiqueta:(c[14]||"").split(",").map(e=>e.trim()).filter(e=>e),
-dias:parseInt(c[29])||0
-};
-});
+            return{
+                proc:c[5],
+                autor:c[2],
+                reu:c[3],
+                orgao:c[8],
+                data:c[9],
+                mes:(c[9]||"").split("/")[1],
+                assunto:c[22],
+                etiqueta:(c[14]||"").split(",").map(e=>e.trim()).filter(e=>e),
+                dias:parseInt(c[29])||0
+            };
+        });
 
-aplicar();
+        aplicar();
 
-};
+    };
 
-reader.readAsText(f);
+    reader.readAsText(f);
 }
 
 // ================= BASE DINÂMICA
 function base(){
-return dados.filter(d=>
-(!filtros.mes.length || filtros.mes.includes(d.mes)) &&
-(!filtros.orgao.length || filtros.orgao.includes(d.orgao)) &&
-(!filtros.etiqueta.length || filtros.etiqueta.some(e=>d.etiqueta.includes(e)))
-);
+    return dados.filter(d=>
+        (!filtros.mes.length || filtros.mes.includes(d.mes)) &&
+        (!filtros.orgao.length || filtros.orgao.includes(d.orgao)) &&
+        (!filtros.etiqueta.length || filtros.etiqueta.some(e=>d.etiqueta.includes(e)))
+    );
 }
 
 // ================= FILTROS
 function criarFiltros(){
 
-let baseDados = base();
+    let baseDados = base();
 
-let meses=[...new Set(dados.map(d=>d.mes))].sort();
-let orgaos=[...new Set(baseDados.map(d=>d.orgao))];
-let assuntos=[...new Set(baseDados.map(d=>d.assunto))].sort();
+    let meses=[...new Set(dados.map(d=>d.mes))].sort();
+    let orgaos=[...new Set(baseDados.map(d=>d.orgao))];
+    let assuntos=[...new Set(baseDados.map(d=>d.assunto))].sort();
 
-let etiquetasSet=new Set();
-baseDados.forEach(d=>d.etiqueta.forEach(e=>etiquetasSet.add(e)));
+    let etiquetasSet=new Set();
+    baseDados.forEach(d=>d.etiqueta.forEach(e=>etiquetasSet.add(e)));
 
-let servidor=[], outros=[];
+    let servidor=[], outros=[];
 
-[...etiquetasSet].forEach(e=>{
-if(e.toLowerCase().includes("servidor")||e.toLowerCase().includes("supervis")){
-    servidor.push(e);
-}else{
-    outros.push(e);
-}
-});
+    [...etiquetasSet].forEach(e=>{
+        if(e.toLowerCase().includes("servidor")||e.toLowerCase().includes("supervis")){
+            servidor.push(e);
+        }else{
+            outros.push(e);
+        }
+    });
 
-servidor.sort();
-outros.sort();
+    servidor.sort();
+    outros.sort();
 
-document.getElementById("filtros").innerHTML=`
-
-<div class="filtro"><b>Mês</b><br>${
-meses.map(v=>btn("mes",v)).join("")}</div>
-
-<div class="filtro"><b>Órgão</b><br>${
-orgaos.map(v=>btn("orgao",v)).join("")}</div>
-
-<div class="filtro"><b>Servidor / Supervisão</b><br>${
-servidor.map(v=>btn("etiqueta",v)).join("")}</div>
-
-<div class="filtro"><b>Outras etiquetas</b><br>${
-outros.map(v=>btn("etiqueta",v)).join("")}</div>
-
-<div class="filtro" style="grid-column: span 2;"><b>Assunto</b><br>${
-assuntos.map(v=>btn("assunto",v)).join("")}</div>
-`;
+    document.getElementById("filtros").innerHTML=`
+        <div class="filtro"><b>Mês</b><br>${meses.map(v=>btn("mes",v)).join("")}</div>
+        <div class="filtro"><b>Órgão</b><br>${orgaos.map(v=>btn("orgao",v)).join("")}</div>
+        <div class="filtro"><b>Servidor / Supervisão</b><br>${servidor.map(v=>btn("etiqueta",v)).join("")}</div>
+        <div class="filtro"><b>Outras etiquetas</b><br>${outros.map(v=>btn("etiqueta",v)).join("")}</div>
+        <div class="filtro" style="grid-column: span 2;"><b>Assunto</b><br>${assuntos.map(v=>btn("assunto",v)).join("")}</div>
+    `;
 }
 
 // ================= BOTÕES
 function btn(tipo, valor){
-let ativo = filtros[tipo].includes(valor) ? "active" : "";
-return `<button class="${ativo}" onclick="toggle('${tipo}','${valor}',this)">${valor}</button>`;
+    let ativo = filtros[tipo].includes(valor) ? "active" : "";
+    return `<button class="${ativo}" onclick="toggle('${tipo}','${valor}',this)">${valor}</button>`;
 }
 
 function toggle(tipo,val,el){
-
-if(filtros[tipo].includes(val)){
-    filtros[tipo] = filtros[tipo].filter(v=>v!==val);
-}else{
-    filtros[tipo].push(val);
-}
-
-aplicar();
+    if(filtros[tipo].includes(val)){
+        filtros[tipo] = filtros[tipo].filter(v=>v!==val);
+    }else{
+        filtros[tipo].push(val);
+    }
+    aplicar();
 }
 
 // ================= FILTRAR
 function aplicar(){
+    filtrados = dados.filter(d=>
+        (!filtros.mes.length||filtros.mes.includes(d.mes)) &&
+        (!filtros.orgao.length||filtros.orgao.includes(d.orgao)) &&
+        (!filtros.assunto.length||filtros.assunto.includes(d.assunto)) &&
+        (!filtros.etiqueta.length||filtros.etiqueta.some(e=>d.etiqueta.includes(e)))
+    );
 
-filtrados = dados.filter(d=>
-(!filtros.mes.length||filtros.mes.includes(d.mes)) &&
-(!filtros.orgao.length||filtros.orgao.includes(d.orgao)) &&
-(!filtros.assunto.length||filtros.assunto.includes(d.assunto)) &&
-(!filtros.etiqueta.length||filtros.etiqueta.some(e=>d.etiqueta.includes(e)))
-);
-
-criarFiltros();
-render();
+    criarFiltros();
+    render();
 }
 
 // ================= COLUNAS
 function col(){
-return [c1.checked,c2.checked,c3.checked,c4.checked,c5.checked,c6.checked,c7.checked,c8.checked];
+    return [c1.checked,c2.checked,c3.checked,c4.checked,c5.checked,c6.checked,c7.checked,c8.checked];
 }
 
 // ================= RENDER
 function render(){
+    document.getElementById("total").innerText = filtrados.length;
 
-document.getElementById("total").innerText = filtrados.length;
+    let c = col();
+    let head=["Processo","Autor","Réu","Órgão","Data","Assunto","Etiqueta","Dias"];
 
-let c = col();
-let head=["Processo","Autor","Réu","Órgão","Data","Assunto","Etiqueta","Dias"];
+    document.querySelector("thead").innerHTML =
+        "<tr>"+head.map((h,i)=>c[i]?`<th>${h}</th>`:"").join("")+"</tr>";
 
-document.querySelector("thead").innerHTML =
-"<tr>"+head.map((h,i)=>c[i]?`<th>${h}</th>`:"").join("")+"</tr>";
-
-document.querySelector("tbody").innerHTML =
-filtrados.map(d=>`
-<tr>
-${c[0]?`<td>${d.proc}</td>`:""}
-${c[1]?`<td>${d.autor}</td>`:""}
-${c[2]?`<td>${d.reu}</td>`:""}
-${c[3]?`<td>${d.orgao}</td>`:""}
-${c[4]?`<td>${d.data}</td>`:""}
-${c[5]?`<td>${d.assunto}</td>`:""}
-${c[6]?`<td>${d.etiqueta.join(", ")}</td>`:""}
-${c[7]?`<td>${d.dias}</td>`:""}
-</tr>
-`).join("");
+    document.querySelector("tbody").innerHTML =
+        filtrados.map(d=>`
+        <tr>
+            ${c[0]?`<td>${d.proc}</td>`:""}
+            ${c[1]?`<td>${d.autor}</td>`:""}
+            ${c[2]?`<td>${d.reu}</td>`:""}
+            ${c[3]?`<td>${d.orgao}</td>`:""}
+            ${c[4]?`<td>${d.data}</td>`:""}
+            ${c[5]?`<td>${d.assunto}</td>`:""}
+            ${c[6]?`<td>${d.etiqueta.join(", ")}</td>`:""}
+            ${c[7]?`<td>${d.dias}</td>`:""}
+        </tr>
+        `).join("");
 }
 
 // ================= JSON
 function salvarJSON(){
-let blob=new Blob([JSON.stringify(dados)],{type:"application/json"});
-let a=document.createElement("a");
-a.href=URL.createObjectURL(blob);
-a.download="dados.json";
-a.click();
+    let blob=new Blob([JSON.stringify(dados)],{type:"application/json"});
+    let a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="dados.json";
+    a.click();
 }
 
 function carregarJSON(){
-let input=document.createElement("input");
-input.type="file";
-input.onchange=e=>{
-let reader=new FileReader();
-reader.onload=ev=>{
-dados = JSON.parse(ev.target.result);
-aplicar();
-};
-reader.readAsText(e.target.files[0]);
-};
-input.click();
+    let input=document.createElement("input");
+    input.type="file";
+    input.onchange=e=>{
+        let reader=new FileReader();
+        reader.onload=ev=>{
+            dados = JSON.parse(ev.target.result);
+            aplicar();
+        };
+        reader.readAsText(e.target.files[0]);
+    };
+    input.click();
 }
 
 function gerarPDF(){
 
-// ================= DATA + HORA
-let agora = new Date();
+    // ================= DATA + HORA
+    let agora = new Date();
 
-let dia = String(agora.getDate()).padStart(2, '0');
-let mes = String(agora.getMonth() + 1).padStart(2, '0');
-let ano = agora.getFullYear();
+    let dia = String(agora.getDate()).padStart(2, '0');
+    let mes = String(agora.getMonth() + 1).padStart(2, '0');
+    let ano = agora.getFullYear();
 
-let hora = String(agora.getHours()).padStart(2, '0');
-let min = String(agora.getMinutes()).padStart(2, '0');
-let seg = String(agora.getSeconds()).padStart(2, '0');
+    let hora = String(agora.getHours()).padStart(2, '0');
+    let min = String(agora.getMinutes()).padStart(2, '0');
+    let seg = String(agora.getSeconds()).padStart(2, '0');
 
-let dataHora = `${dia}/${mes}/${ano} ${hora}:${min}:${seg}`;
+    let dataHora = `${dia}/${mes}/${ano} ${hora}:${min}:${seg}`;
 
-// ================= NUMERO DO RELATÓRIO
-let numeroRelatorio = Date.now(); // único
+    // ================= NUMERO DO RELATÓRIO
+    let numeroRelatorio = Date.now(); // único
 
-// ================= TEXTO FILTROS
-let texto="<b>Filtros aplicados:</b><br>";
+    // ================= TEXTO FILTROS
+    let texto="<b>Filtros aplicados:</b><br>";
 
-if(filtros.mes.length) texto+="Mês: "+filtros.mes.join(", ")+"<br>";
-if(filtros.etiqueta.length) texto+="Etiquetas: "+filtros.etiqueta.join(", ")+"<br>";
-if(filtros.orgao.length) texto+="Órgão: "+filtros.orgao.join(", ")+"<br>";
-if(filtros.assunto.length) texto+="Assunto: "+filtros.assunto.join(", ")+"<br>";
+    if(filtros.mes.length) texto+="Mês: "+filtros.mes.join(", ")+"<br>";
+    if(filtros.etiqueta.length) texto+="Etiquetas: "+filtros.etiqueta.join(", ")+"<br>";
+    if(filtros.orgao.length) texto+="Órgão: "+filtros.orgao.join(", ")+"<br>";
+    if(filtros.assunto.length) texto+="Assunto: "+filtros.assunto.join(", ")+"<br>";
 
-// ================= HTML PDF
-let html = `
-<style>
-/* === ESSA É A REGRA QUE FORÇA A IMPRESSÃO DAS CORES === */
-* {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-}
+    // ================= HTML PDF
+    let html = `
+    <style>
+    /* === ESSA É A REGRA QUE FORÇA A IMPRESSÃO DAS CORES === */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
 
-body{
-    font-family:Arial;
-}
+    body{
+        font-family:Arial;
+    }
 
-.header{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    background:#1565c0;
-    color:white;
-    padding:10px;
-}
+    .header{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        background:#1565c0;
+        color:white;
+        padding:10px;
+    }
 
-.header img{
-    height:50px;
-    background:white;
-    padding:3px;
-    border-radius:5px;
-}
+    .header img{
+        height:50px;
+        background:white;
+        padding:3px;
+        border-radius:5px;
+    }
 
-table{
-    width:100%;
-    border-collapse:collapse;
-    margin-top: 15px;
-}
+    table{
+        width:100%;
+        border-collapse:collapse;
+        margin-top: 15px;
+    }
 
-th{
-    background:#64b5f6 !important; /* Adicionado !important para garantir */
-    color:white;
-}
+    th{
+        background:#64b5f6 !important;
+        color:white;
+    }
 
-td,th{
-    border:1px solid #ccc;
-    padding:5px;
-}
+    td,th{
+        border:1px solid #ccc;
+        padding:5px;
+    }
 
-tr:nth-child(even){
-    background:#f1f1f1 !important; /* Adicionado !important para garantir */
-}
+    tr:nth-child(even){
+        background:#f1f1f1 !important;
+    }
 
-.footer{
-    margin-top:20px;
-    font-size:12px;
-}
-</style>
+    .footer{
+        margin-top:20px;
+        font-size:12px;
+    }
+    </style>
 
-<div class="header">
-    <div>
-        <h3 style="margin:0;">Contadoria Judicial</h3>
-        <p style="margin:0;">Justiça Federal em Pernambuco</p>
+    <div class="header">
+        <div>
+            <h3 style="margin:0;">Contadoria Judicial</h3>
+            <p style="margin:0;">Justiça Federal em Pernambuco</p>
+        </div>
     </div>
-</div>
 
-<h2>Relatório de Processos</h2>
+    <h2>Relatório de Processos</h2>
 
-<p><b>Nº do Relatório:</b> ${numeroRelatorio}</p>
+    <p><b>Nº do Relatório:</b> ${numeroRelatorio}</p>
 
-<p>${texto}</p>
+    <p>${texto}</p>
 
-${document.querySelector("table").outerHTML}
+    ${document.querySelector("table").outerHTML}
 
-<div class="footer">
-Relatório emitido em: ${dataHora}
-</div>
-`;
+    <div class="footer">
+    Relatório emitido em: ${dataHora}
+    </div>
+    `;
 
-// ================= ABRIR
-let win = window.open("", "_blank");
-win.document.write(html);
-win.document.close(); // Importante para garantir que a página carregue completamente
-win.focus();
-win.print();
+    // ================= ABRIR
+    let win = window.open("", "_blank");
+    win.document.write(html);
+    win.document.close(); // Importante para garantir que a página carregue completamente
+    win.focus();
+    win.print();
 
 }
 
