@@ -2,13 +2,18 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Contadoria Judicial PE</title>
+<title>Contadoria Judicial - PE</title>
 
+<!-- ✅ Chart.js corrigido -->
 https://cdn.jsdelivr.net/npm/chart.jsscript>
 
 <style>
 
-body {font-family:Arial; background:#ddd; margin:0;}
+body{
+    font-family:Arial;
+    background:#ddd;
+    margin:0;
+}
 
 header{
     background:#1565c0;
@@ -19,7 +24,12 @@ header{
     padding:10px;
 }
 
-header img{height:50px;}
+header img{
+    height:50px;
+    background:white;
+    padding:3px;
+    border-radius:5px;
+}
 
 .container{padding:10px;}
 
@@ -50,6 +60,7 @@ header img{height:50px;}
     padding:5px;
     background:#ccc;
     border:none;
+    cursor:pointer;
 }
 
 .filtro button.active{
@@ -95,7 +106,7 @@ button{
 <body>
 
 <header>
-logo.svg
+
 <h3>Sistema de Filtragem Contadoria Judicial - Justiça Federal em Pernambuco</h3>
 </header>
 
@@ -104,17 +115,19 @@ logo.svg
 <div id="drop">Arraste o CSV aqui ou clique</div>
 <input type="file" id="file" hidden>
 
-<button onclick="gerarPDF()">📄 PDF</button>
+<button onclick="gerarPDF()">📄 Gerar PDF</button>
 <button onclick="salvarJSON()">💾 Salvar JSON</button>
 <button onclick="carregarJSON()">📂 Carregar JSON</button>
 
 <h3>Total filtrado: <span id="total">0</span></h3>
 
+<!-- COLUNAS -->
 <div class="colunas">
 <b>Colunas:</b><br>
+
 <label><input type="checkbox" checked id="c1" onchange="render()"> Processo</label>
 <label><input type="checkbox" id="c2" onchange="render()"> Autor</label>
-<label><input type="checkbox" id="c3" onchange="render()"> Réu</label>
+<label><input type="checkbox" checked id="c3" onchange="render()"> Réu</label>
 <label><input type="checkbox" checked id="c4" onchange="render()"> Órgão</label>
 <label><input type="checkbox" checked id="c5" onchange="render()"> Data</label>
 <label><input type="checkbox" checked id="c6" onchange="render()"> Assunto</label>
@@ -122,6 +135,7 @@ logo.svg
 <label><input type="checkbox" id="c8" onchange="render()"> Dias</label>
 </div>
 
+<!-- FILTROS -->
 <div id="filtros" class="filtros-grid"></div>
 
 <table>
@@ -137,16 +151,19 @@ let dados=[];
 let filtrados=[];
 let filtros={mes:[],orgao:[],etiqueta:[],assunto:[]};
 
-// ================= DRAG
+// ================= DROP
 const drop=document.getElementById("drop");
 const file=document.getElementById("file");
 
 drop.onclick=()=>file.click();
+
 drop.ondragover=e=>e.preventDefault();
+
 drop.ondrop=e=>{
     e.preventDefault();
     processar(e.dataTransfer.files[0]);
 };
+
 file.onchange=e=>processar(e.target.files[0]);
 
 // ================= CSV
@@ -155,6 +172,7 @@ function processar(f){
 let reader=new FileReader();
 
 reader.onload=e=>{
+
 let linhas=e.target.result.split("\n").map(l=>l.replaceAll('"',''));
 
 dados=linhas.slice(1).map(l=>{
@@ -168,47 +186,46 @@ orgao:c[8],
 data:c[9],
 mes:(c[9]||"").split("/")[1],
 assunto:c[22],
-etiqueta:(c[14]||"").split(",").map(e=>e.trim()),
+etiqueta:(c[14]||"").split(",").map(e=>e.trim()).filter(e=>e),
 dias:parseInt(c[29])||0
 };
 });
 
 aplicar();
+
 };
 
 reader.readAsText(f);
 }
 
-// ================= BASE FILTRO DINÂMICO
-
+// ================= BASE DINÂMICA
 function base(){
 return dados.filter(d=>
-(!filtros.mes.length||filtros.mes.includes(d.mes)) &&
-(!filtros.orgao.length||filtros.orgao.includes(d.orgao)) &&
-(!filtros.etiqueta.length||filtros.etiqueta.some(e=>d.etiqueta.includes(e)))
+(!filtros.mes.length || filtros.mes.includes(d.mes)) &&
+(!filtros.orgao.length || filtros.orgao.includes(d.orgao)) &&
+(!filtros.etiqueta.length || filtros.etiqueta.some(e=>d.etiqueta.includes(e)))
 );
 }
 
 // ================= FILTROS
-
 function criarFiltros(){
 
-let baseDados=base();
+let baseDados = base();
 
 let meses=[...new Set(dados.map(d=>d.mes))].sort();
 let orgaos=[...new Set(baseDados.map(d=>d.orgao))];
 let assuntos=[...new Set(baseDados.map(d=>d.assunto))].sort();
 
-let etiquetas=new Set();
-baseDados.forEach(d=>d.etiqueta.forEach(e=>etiquetas.add(e)));
+let etiquetasSet=new Set();
+baseDados.forEach(d=>d.etiqueta.forEach(e=>etiquetasSet.add(e)));
 
 let servidor=[], outros=[];
 
-[...etiquetas].forEach(e=>{
+[...etiquetasSet].forEach(e=>{
 if(e.toLowerCase().includes("servidor")||e.toLowerCase().includes("supervis")){
-servidor.push(e);
+    servidor.push(e);
 }else{
-outros.push(e);
+    outros.push(e);
 }
 });
 
@@ -217,56 +234,44 @@ outros.sort();
 
 document.getElementById("filtros").innerHTML=`
 
-<div class="filtro">
-<b>Mês</b><br>
-${meses.map(v=>btn("mes",v)).join("")}
-</div>
+<div class="filtro"><b>Mês</b><br>${
+meses.map(v=>btn("mes",v)).join("")}</div>
 
-<div class="filtro">
-<b>Órgão</b><br>
-${orgaos.map(v=>btn("orgao",v)).join("")}
-</div>
+<div class="filtro"><b>Órgão</b><br>${
+orgaos.map(v=>btn("orgao",v)).join("")}</div>
 
-<div class="filtro">
-<b>Servidor / Supervisão</b><br>
-${servidor.map(v=>btn("etiqueta",v)).join("")}
-</div>
+<div class="filtro"><b>Servidor / Supervisão</b><br>${
+servidor.map(v=>btn("etiqueta",v)).join("")}</div>
 
-<div class="filtro">
-<b>Outras etiquetas</b><br>
-${outros.map(v=>btn("etiqueta",v)).join("")}
-</div>
+<div class="filtro"><b>Outras etiquetas</b><br>${
+outros.map(v=>btn("etiqueta",v)).join("")}</div>
 
-<div class="filtro" style="grid-column: span 2;">
-<b>Assunto</b><br>
-${assuntos.map(v=>btn("assunto",v)).join("")}
-</div>
-
+<div class="filtro" style="grid-column: span 2;"><b>Assunto</b><br>${
+assuntos.map(v=>btn("assunto",v)).join("")}</div>
 `;
 }
 
-function btn(t,v){
-return `<button onclick="toggle('${t}','${v}',this)">${v}</button>`;
+// ================= BOTÕES
+function btn(tipo, valor){
+let ativo = filtros[tipo].includes(valor) ? "active" : "";
+return `<button class="${ativo}" onclick="toggle('${tipo}','${valor}',this)">${valor}</button>`;
 }
 
 function toggle(tipo,val,el){
 
-el.classList.toggle("active");
-
 if(filtros[tipo].includes(val)){
-filtros[tipo]=filtros[tipo].filter(v=>v!=val);
+    filtros[tipo] = filtros[tipo].filter(v=>v!==val);
 }else{
-filtros[tipo].push(val);
+    filtros[tipo].push(val);
 }
 
 aplicar();
 }
 
 // ================= FILTRAR
-
 function aplicar(){
 
-filtrados=dados.filter(d=>
+filtrados = dados.filter(d=>
 (!filtros.mes.length||filtros.mes.includes(d.mes)) &&
 (!filtros.orgao.length||filtros.orgao.includes(d.orgao)) &&
 (!filtros.assunto.length||filtros.assunto.includes(d.assunto)) &&
@@ -278,24 +283,22 @@ render();
 }
 
 // ================= COLUNAS
-
 function col(){
 return [c1.checked,c2.checked,c3.checked,c4.checked,c5.checked,c6.checked,c7.checked,c8.checked];
 }
 
 // ================= RENDER
-
 function render(){
 
-document.getElementById("total").innerText=filtrados.length;
+document.getElementById("total").innerText = filtrados.length;
 
-let c=col();
+let c = col();
 let head=["Processo","Autor","Réu","Órgão","Data","Assunto","Etiqueta","Dias"];
 
-document.querySelector("thead").innerHTML=
+document.querySelector("thead").innerHTML =
 "<tr>"+head.map((h,i)=>c[i]?`<th>${h}</th>`:"").join("")+"</tr>";
 
-document.querySelector("tbody").innerHTML=
+document.querySelector("tbody").innerHTML =
 filtrados.map(d=>`
 <tr>
 ${c[0]?`<td>${d.proc}</td>`:""}
@@ -304,14 +307,13 @@ ${c[2]?`<td>${d.reu}</td>`:""}
 ${c[3]?`<td>${d.orgao}</td>`:""}
 ${c[4]?`<td>${d.data}</td>`:""}
 ${c[5]?`<td>${d.assunto}</td>`:""}
-${c[6]?`<td>${d.etiqueta.join(",")}</td>`:""}
+${c[6]?`<td>${d.etiqueta.join(", ")}</td>`:""}
 ${c[7]?`<td>${d.dias}</td>`:""}
 </tr>
 `).join("");
 }
 
 // ================= JSON
-
 function salvarJSON(){
 let blob=new Blob([JSON.stringify(dados)],{type:"application/json"});
 let a=document.createElement("a");
@@ -326,7 +328,7 @@ input.type="file";
 input.onchange=e=>{
 let reader=new FileReader();
 reader.onload=ev=>{
-dados=JSON.parse(ev.target.result);
+dados = JSON.parse(ev.target.result);
 aplicar();
 };
 reader.readAsText(e.target.files[0]);
@@ -335,7 +337,6 @@ input.click();
 }
 
 // ================= PDF
-
 function gerarPDF(){
 
 let texto="<b>Filtros aplicados:</b><br>";
@@ -343,18 +344,37 @@ let texto="<b>Filtros aplicados:</b><br>";
 if(filtros.mes.length) texto+="Mês: "+filtros.mes.join(", ")+"<br>";
 if(filtros.etiqueta.length) texto+="Etiquetas: "+filtros.etiqueta.join(", ")+"<br>";
 if(filtros.orgao.length) texto+="Órgão: "+filtros.orgao.join(", ")+"<br>";
+if(filtros.assunto.length) texto+="Assunto: "+filtros.assunto.join(", ")+"<br>";
 
 let html=`
 <style>
 body{font-family:Arial;}
+
+.header{
+display:flex; align-items:center; gap:10px;
+background:#1565c0; color:white; padding:10px;
+}
+
+.header img{
+height:50px;
+background:white;
+padding:3px;
+}
+
 table{width:100%; border-collapse:collapse;}
 th{background:#64b5f6;color:white;}
 td,th{border:1px solid #ccc;padding:5px;}
 tr:nth-child(even){background:#f1f1f1;}
 </style>
 
+<div class="header">
+
+<h3>Contadoria Judicial - Justiça Federal em Pernambuco</h3>
+</div>
+
 <h2>Relatório</h2>
 <p>${texto}</p>
+
 ${document.querySelector("table").outerHTML}
 `;
 
